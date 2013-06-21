@@ -12,19 +12,23 @@
  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  # Public License for more details
 ##
+cmake_minimum_required(VERSION 2.8)
 
-cmake_minimum_required(VERSION 2.6.4)
-
-set(KEYWORD "yarptoros")
-set(CMAKE_CXX_FLAGS "-std=c++0x")
+set(KEYWORD "yarprosbridge")
 
 # Start a project.
 project(${KEYWORD})
 
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+
+
 # Find YARP.  Point the YARP_DIR environment variable at your build.
 find_package(YARP REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(PythonLibs REQUIRED)
 
+#ADD_ROSPACK_DEPENDENCY(roscpp)
+find_package(catkin REQUIRED COMPONENTS roscpp cv_bridge)
 # Search for source code.
 file(GLOB folder_source src/*.cpp src/*.cc src/*.c)
 file(GLOB folder_header include/*.h)
@@ -40,15 +44,33 @@ endforeach(header_file ${folder_header})
 # Inclue any directories needed for YARP
 include_directories(${YARP_INCLUDE_DIRS}
 		    ${modHelp_INCLUDE_DIRS}
-		    ${objects_INCLUDE_DIRS})
+		    ${objects_INCLUDE_DIRS}
+		    ${PYTHON_INCLUDE_DIRS})
 
 # Set up our main executable.
 if (folder_source)
   add_executable(${KEYWORD} ${folder_source} ${folder_header})
   target_link_libraries(${KEYWORD} ${YARP_LIBRARIES}
-				   				   ${OpenCV_LIBS}
-				   				   modHelp
-				   				   objects)
+	                           ${OpenCV_LIBS}
+		                   ${PYTHON_LIBRARIES}
+				   modHelp
+		                   objects)
 else (folder_source)
   message(FATAL_ERROR "No source code files found. Please add something")
 endif (folder_source)
+
+install(TARGETS ${KEYWORD} DESTINATION /usr/local/bin)
+
+target_link_libraries(${KEYWORD}
+   ${catkin_LIBRARIES}
+)
+
+add_custom_target(run
+    COMMAND yarprosbridge
+    DEPENDS yarprosbridge
+    WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
+)
+
+set(CMAKE_CXX_FLAGS "-std=c++0x -ggdb")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpython2.7")
+

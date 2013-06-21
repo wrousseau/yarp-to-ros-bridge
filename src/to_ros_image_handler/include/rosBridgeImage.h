@@ -14,39 +14,35 @@
 */
 
  /**
- * \file dataToRos.h
- * \brief Main header
+ * \file rosBridgeImage.h
+ * \brief Libraries and namespaces to handle images
  * \author Woody Rousseau
  * \version 0.1
- * \date 23/05/13
+ * \date 29/05/13
  *
- * Contains most commonly used libraries, namespaces and defines
  */
 
-#ifndef H_CAMTOROS
-#define H_CAMTOROS
+#ifndef H_ROS_BRIDGE_IMAGE
+#define H_ROS_BRIDGE_IMAGE
 
-#include <string>
-#include <cstring>
+#include "ros/ros.h"
+#include <sstream>
 #include <iostream>
-#include <unistd.h>
-#include <errno.h>
-#include <cstdlib>
-#include <vector>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include <sys/select.h>
+#include <signal.h>
 
-/**
- * \def P_READ
- * Used to get the read file descriptor. Is 0.
- */
-#define P_READ 0
-/**
- * \def P_WRITE
- * Used to get the write file descriptor. Is 0.
- */
-#define P_WRITE 1
+
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+using namespace std;
+using namespace cv;
+namespace enc = sensor_msgs::image_encodings;
+using namespace cv_bridge;
 
 #endif
-
-// Used Namespaces
-using namespace std;
-using namespace yarp::os;

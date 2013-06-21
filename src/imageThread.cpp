@@ -21,10 +21,12 @@
  * \date 23/05/13
  */
 
+extern bool loopAgain;
+
 #include "imageThread.h"
 
-ImageThread::ImageThread(string _name, string _robot, string _devicePort, int _rate) : 
-    ConvertThread(_name, _robot, _devicePort, _rate), width(0), height(0), image8u(NULL)
+ImageThread::ImageThread(string _name, string _yarpPort, string _rosTopic, int _rate, int *_fd) : 
+    ConvertThread(_name, _yarpPort, _rosTopic, _rate, _fd), width(0), height(0), image8u(NULL)
 {
 }
 
@@ -37,7 +39,17 @@ bool ImageThread::threadInit()
     // Open the port for receiving the images
     imagePort.open(clientPort.c_str()); 
     // Cnnecting the port to the icub camera 
-    Network::connect(("/"+robot+devicePort).c_str(),clientPort.c_str(),type.c_str(),false);
+    Network::connect((yarpPort).c_str(),clientPort.c_str(),type.c_str(),false);
+    ConvertThread::openRosSender();
+
+    close(fd[P_READ]);
+    // Only the original process (father) has survived, he's the one which will be writing, so we don't need the "read" side    
+    fromYarpPipe = fdopen(fd[P_WRITE],"w");
+    if (fromYarpPipe == NULL)
+    {
+        cerr << "Fdropen, Write" << endl;
+        std::exit(EXIT_FAILURE);
+    }
     return true;
 }
 
@@ -57,6 +69,7 @@ void ImageThread::run()
     //if the port actually received an image message
     if (yarpImage!=NULL) 
     { 
+        loopAgain = false;
         if(firstData)
         {
             // Get image dimensions
@@ -66,13 +79,11 @@ void ImageThread::run()
             // Create opencv image with the same dimensions
             image8u = cvCreateImage(cvSize(yarpImage->width(), yarpImage->height()), IPL_DEPTH_8U, 3);
             matImage.create( yarpImage->width(), yarpImage->height(), CV_8UC3 );
-            firstData = false;
-            
-            cout << "[yarp]:::Images sent have size: w=" << width << " h=" << height << endl;
+            firstData = false; 
         }
 
         // Convert the image form IPLImage to cv::Mat in order to be sent by the pipe
-        matImage = Mat(static_cast<IplImage*>(yarpImage->getIplImage()));   
+        matImage = Mat( static_cast<IplImage*>(yarpImage->getIplImage()) );   
         cvtColor(matImage, matImage, CV_BGR2RGB);
         
         // Display the image sent by yarp
@@ -81,16 +92,18 @@ void ImageThread::run()
         waitKey(100);
 
         // Sending the image by the pipe
-        fprintf(yarpPipe,"image\n");
-        fprintf(yarpPipe,"%d\n",matImage.rows);
-        fprintf(yarpPipe,"%d\n",matImage.cols);
+        fprintf(fromYarpPipe,"%d\n",matImage.rows);
+        fprintf(fromYarpPipe,"%d\n",matImage.cols);
             
         int size = matImage.rows*matImage.cols*3;
-        if (fwrite(matImage.data,sizeof(unsigned char),size,yarpPipe) == 0)
+        if ( fwrite( matImage.data, sizeof(unsigned char), size, fromYarpPipe) == 0 )
         {
             cerr << "[yarp]::Sending error : " << strerror(errno) << endl;
         }
-        fflush(yarpPipe);
+        fflush(fromYarpPipe);
         matImage.release();
     }
+
+    while (!loopAgain)
+    {}    
 }

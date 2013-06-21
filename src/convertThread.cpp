@@ -25,7 +25,46 @@
 
 #include "convertThread.h"
 
-ConvertThread::ConvertThread(string _name, string _robot, string _devicePort, int _rate) : 
-    RateThread(_rate), name(_name), robot(_robot), devicePort(_devicePort), firstData(true)
+FILE* fromYarpPipe; // In order to deal with file descriptors, we must use a C FILE*
+bool loopAgain = false;
+
+ConvertThread::ConvertThread(string _name, string _yarpPort, string _rosTopic, int _rate, int *_fd) : 
+    RateThread(_rate), name(_name), yarpPort(_yarpPort), rosTopic(_rosTopic), firstData(true), fd(_fd)
 {
+    sigemptyset( &sigact.sa_mask );
+    sigact.sa_handler = catcher;
+    sigact.sa_flags = 0;
+    if (sigaction( SIGUSR1, &sigact, NULL ) == -1)
+        cerr << "sigaction" << endl;
+
+}
+
+void ConvertThread::openRosSender()
+{
+    switch ( childPid = fork() ) 
+    {
+        case -1 : // Something went wrong. Abort.
+            cerr << "fork" << endl;
+    
+        case 0 : // Child process of the fork()
+            close(fd[P_WRITE]);
+            launchRosModule();          
+            break; // The child process never goes there (execlp or error)                
+        default: // Parent process of the fork()
+            break;
+    }
+
+}    
+
+void ConvertThread::launchRosModule()
+{
+    string readFD = to_string(fd[P_READ]);
+    cout << "Launching ROS module..." << endl;
+    execlp("./rosreception","./rosreception", readFD.c_str(), rosTopic.c_str(), to_string(getppid()).c_str(), NULL );
+    cerr << "what the hell are we doing here ?" << endl;
+}
+
+void catcher (int sig)
+{
+    loopAgain = true;
 }

@@ -26,16 +26,13 @@
 #ifndef DATA_THREAD_H
 #define DATA_THREAD_H
 
-// Yarp Libraries
-#include <yarp/os/BufferedPort.h>
-
-#include "dataToRos.h"
+#include "bridge.h"
 #include "convertThread.h"
 #include "bridgeHeader.h"
 
-extern FILE* yarpPipe; /**< We get that global FILE* because it is here that we write in it ! */
+extern FILE* fromYarpPipe; /**< We get that global FILE* because it is here that we write in it ! */
 
-/** \class ConvertThread
+/** \class DataThread
    * \brief Sending data and headers through the pipe
    *
    * This class does almost all the work ! It opens the device port, let us connect with it
@@ -46,24 +43,25 @@ class DataThread : public ConvertThread
 
 private:
   BufferedPort<Bottle> inPort; /**< The port connected to the device port to gather data */
-  vector<BridgeHeader> yarpGroups; /**< The headers corresponding to the data we are about to send */
-
+  field yarpGroups; /**< The headers corresponding to the data we are about to send */
   string headers; /**< Headers are all converted to one big string in order to be sent through the pipe */
+
 
 public:
 
   /**
      *  \brief Constructor
      *
-     *  Construct a ConvertThread from the parameters gathered in ConvertModule
+     *  Construct a DataThread from the parameters gathered in ConvertModule
      *
      * \param _name : The name of the module
-     * \param _robot : The name of the robot
-     * \param _devicePort : The device port from which we'll be seeking data
+     * \param _yarpPort : The device port from which we'll be seeking data
+     * \param _rosTopic : The ROS topic on which we want to publish the data
      * \param _yarpGroups : The headers corresponding to the data we are about to send
      * \param _rate : The rate of the thread which is needed by the parent constructor
+     * \param _fd : Pointer to the file descriptors 
      */
-  DataThread(string _name, string _robot, string _devicePort, vector<BridgeHeader> _yarpGroups, int _rate);
+  DataThread(string _name, string _yarpPort, string _rosTopic, field _yarpGroups, int _rate, int *_fd);
 
   /**
      * \brief Initializing the thread
@@ -89,13 +87,11 @@ public:
      */
   virtual void run();
 
-  /**
-     *  \brief Generates the headers string
-     *
-     *  Forms a big string out of all the headers contained in the vector (both types and names)
-     */
-  string getDataHeadersString();
-
 };
+
+
+
+
+
 
 #endif

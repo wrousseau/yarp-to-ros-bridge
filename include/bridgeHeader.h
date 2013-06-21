@@ -25,30 +25,39 @@
 #ifndef BRIDGE_HEADER_H
 #define BRIDGE_HEADER_H
 
+#include <fstream>
+#include <algorithm>
+#include <sys/stat.h>
 #include <yarp/os/all.h>
-#include "dataToRos.h"
+#include "bridge.h"
 
-/** \struct BridgeHeader bridgeHeader.h bridgeHeader
-   * \brief Agreggate class for headers sent/received
-   *
-   *  The headers are just the name and type of each data member sent/received 
-   */
-struct BridgeHeader
-{
-    string name; /**< Name of the data member to be sent/received */
-    string type; /**< Type of the data member to be sent/received */
-};
 
 /** \fn void readBridgeHeaderVector(Bottle &rf, string name, vector<BridgeHeader> &v, int size)
    * \brief Interpreting the .ini file to fill a vector of headers
    * 
    * \param rf Bottle passed as a reference, group currently considered in the .ini file
    * \param name Either yarpgroups or rosgroups, depending on which vector we want to fill
-   * \param v Vector passed as a reference. We want to fill it with the headers (just the name for now)
+   * \param groups passed as a reference. Elements will be pushed back, but only the name of the data for now
    * \param size Number of headers for that vector
    * 
    * This is based on the modHelp functions from a MACSI library  
    */
-void readBridgeHeaderVector(Bottle &rf, string name, vector<BridgeHeader> &v, int size);
+void readBridgeHeaderVector(Bottle &rf, string name, field &groups, int size);
+
+/** \fn void generateRosMessage(vector<BridgeHeader> &v)
+   * \brief Generates the ROS .msg file before compilation
+   * \param groups passed as a reference to const in order to write the proper .msg file using an ofstream
+   * 
+   * This uses an ofstream to generate the Data.msg file in "ros_bridge/msg/"  
+   */
+void generateRosMessage(const field &groups);
+
+/** \fn string convertToRos(string type)
+   * \brief Converts the types from the .ini files into ROS understandable types
+   * \param type The type written in the .ini file
+   * 
+   * If a type does not match a corresponding ROS type, the user is warned but the written type is kept. It might not work.  
+   */
+string convertToRos(string type);
 
 #endif

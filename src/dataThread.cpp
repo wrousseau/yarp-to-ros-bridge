@@ -25,9 +25,12 @@
 
 #include "dataThread.h"
 
-DataThread::DataThread(string _name, string _robot, string _devicePort, vector<BridgeHeader> _yarpGroups, int _rate) : 
-    ConvertThread(_name,_robot,_devicePort,_rate), yarpGroups(_yarpGroups)
+extern bool loopAgain;
+
+DataThread::DataThread(string _name, string _yarpPort, string _rosTopic, field _yarpGroups, int _rate, int *_fd) : 
+    ConvertThread(_name,_yarpPort, _rosTopic, _rate, _fd), yarpGroups(_yarpGroups)
 {
+
 }
 
 bool DataThread::threadInit()
@@ -36,17 +39,27 @@ bool DataThread::threadInit()
     
     string type="tcp";
 
-    headers = getDataHeadersString();
-
     // Open the port for receiving the images
     inPort.open(clientPort.c_str()); 
     // Cnnecting the port to the icub camera 
-    Network::connect(("/"+robot+devicePort).c_str(),clientPort.c_str(),type.c_str(),false);
+    Network::connect((yarpPort).c_str(),clientPort.c_str(),type.c_str(),false);
+    ConvertThread::openRosSender();
+    close(fd[P_READ]);
+
+    // Only the original process (father) has survived, he's the one which will be writing, so we don't need the "read" side    
+    fromYarpPipe = fdopen(fd[P_WRITE],"w");
+    if (fromYarpPipe == NULL)
+    {
+        cerr << "Fdopen, Write" << endl;
+        std::exit(EXIT_FAILURE);
+    }
     return true;
 }
 
 void DataThread::threadRelease()
 {
+    cout << "Releasing the Thread" << endl;
+    kill(childPid,SIGTERM);
     inPort.interrupt();
     inPort.close();
 }
@@ -59,25 +72,16 @@ void DataThread::run()
     // If the port actually received data
     if (bot != NULL) 
     { 
-        if (firstData)
-        {
-            data = bot->toString();
-            cout << "[yarp]:::I received " << bot->toString() << endl;
-        }
-        
-        fprintf(yarpPipe,"%s",headers.c_str()); // Sending the headers through the pipe (types and names) as a string
-        fprintf(yarpPipe,"%s\n",data.c_str()); // Sending the data itself through the pipe
-        cout << "[yarp]:::I sent " << headers << data << endl;
-        fflush(yarpPipe); // Flushing the pipe to prepare for the next message
+        data = bot->toString();
+        loopAgain = false;
+        //cout << "[yarp]:::I received " << bot->toString() << endl;
+        fprintf(fromYarpPipe,"%s\n",data.c_str()); // Sending the data itself through the pipe
+        //cout << "[yarp]:::I sent " << headers << data << endl;
+        fflush(fromYarpPipe); // Flushing the pipe to prepare for the next message
+        while (!loopAgain)
+        {}    
     }
 }
 
-string DataThread::getDataHeadersString()
-{
-    string dataHeadersString = "";
-    for (auto i : yarpGroups)
-    {
-        dataHeadersString += i.type + " " + i.name + " ";
-    }
-    return dataHeadersString;
-}
+
+  
