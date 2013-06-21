@@ -32,6 +32,7 @@
 This bridge will allow generic communication between YARP and ROS.
 
 ======== HOW TO COMPILE/INSTALL ========
+You need YARP, ROS (Groovy) as well as the MACSI repository to make this work. Please check out the wiki for MACSI instructions.
 If you followed the installation instructions for MACSI and if you keep the paths
 intacts, you only have to add $MACSI_ROOT to your $ROS_PACKAGE_PATH. 
 You may want to do that in your .bashrc/.zshrc so that you can use ROS companions functions
@@ -46,7 +47,7 @@ The only thing needed to be done is to enter "yarp_bridge" and do the following 
 > cmake ..
 > make
 
-The single executable file is currently name "yarpbridge" and will be located in "yarp_bridge/bin".
+The single executable file is currently name "yarprosbridge" and will be located in "bin".
 This can be cumbersome but this allows bin to contain all useful files and "build" to contain all CMake files which are pretty much useless.
 In order to not have to move from "build" to "bin", a "make run" from the "build" folder will allow you to launch the program.
 
@@ -61,7 +62,7 @@ You can also pick a custom ".ini" file following the same format by using the op
 Two examples (bridge_data.ini and bridge_image.ini) are provided in the ini directory.
 For more informations about custom .ini files, please check the YARP documentation dealing with ResourcesFinder.
 
-You can also use the GUI tool in order to generate such configurations files, save them or open previous ones.
+You can also use the GUI tool also available on my Github account in order to generate such configurations files, save them or open previous ones.
 
 ======= YARP->ROS ==========
 The entry is a YARP port and the data is processed all the way to a ROS topic. 
@@ -95,6 +96,7 @@ in the .ini file must exist and the ROS msg which specifies the data living in t
 ======= TO DO ==============
 > (YARP->ROS) Storing the ROS node dealing with images and copy it when needed instead of recompiling it. 
 > (ROS->YARP) Dealing with less classic ROS types such as Time, Duration, Array Types and Headers
+> (ROS->YARP) The bridge crashes from ROS->YARP when dealing with images. I need to check out the image_transport class.
 > Processes are sometimes not terminated in a clean way. For some reason, YARP sometimes does not like SIGINT signals.
 
 ======= WILL RUN ON ========================
