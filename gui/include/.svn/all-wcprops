@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/macsi/!svn/ver/640/contrib/yarp_ros_bridge_generator/gui/include
+END
+iohandler.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/macsi/!svn/ver/640/contrib/yarp_ros_bridge_generator/gui/include/iohandler.h
+END
+consolewindow.h
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/macsi/!svn/ver/640/contrib/yarp_ros_bridge_generator/gui/include/consolewindow.h
+END
+mainwindow.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/macsi/!svn/ver/640/contrib/yarp_ros_bridge_generator/gui/include/mainwindow.h
+END
